@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Puzzlecrown – play, create, win</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#FAF6FF;--card:#fff;--ink:#2A1548;--mute:#6A5B84;--line:#E6DBF5;--pri:#F5B700;--onpri:#2A1548;--acc:#7A3DF0;--mint:#2EC4A6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#150C26;--card:#221238;--ink:#F3ECFF;--mute:#B5A6D2;--line:#372352;--acc:#A98BFF}}
+:root[data-theme="dark"]{--bg:#150C26;--card:#221238;--ink:#F3ECFF;--mute:#B5A6D2;--line:#372352;--acc:#A98BFF}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.6 "DM Sans",system-ui,sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque","DM Sans",system-ui,sans-serif;line-height:1.1;margin:0 0 .5em}
+h1{font-size:clamp(2.4rem,7vw,4.6rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800}h3{font-size:1.15rem;font-weight:600}
+p{margin:0 0 1em;max-width:62ch}a{color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:3px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{max-width:1080px;margin:auto;padding:.7rem 1.2rem;display:flex;gap:1rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.logo{font:800 1.4rem "Bricolage Grotesque",sans-serif;text-decoration:none}
+nav{display:flex;gap:.25rem;overflow-x:auto;max-width:100%}
+nav a{padding:.4rem .8rem;border-radius:99px;text-decoration:none;font-weight:500;white-space:nowrap}
+nav a[aria-current="page"]{background:var(--acc);color:#fff}
+main{max-width:1080px;margin:auto;padding:2rem 1.2rem 4rem}
+.page{display:none}.page.on{display:block}
+.btn{font:700 1rem "DM Sans",sans-serif;border:2px solid var(--ink);background:var(--pri);color:var(--onpri);padding:.6rem 1.1rem;border-radius:12px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);text-decoration:none;display:inline-block}
+.btn:active{transform:translate(3px,3px);box-shadow:none}
+.btn.alt{background:var(--card);color:var(--ink)}.btn[disabled]{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:.8rem;flex-wrap:wrap;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1.2rem}
+.sub{color:var(--mute)}
+.hero{display:grid;gap:2rem;padding:1rem 0 2.5rem}
+@media(min-width:800px){.hero{grid-template-columns:1.3fr 1fr;align-items:center}}
+.crown{position:relative;background:var(--pri);color:#2A1548;border:2px solid #2A1548;border-radius:20px;padding:1.6rem;transform:rotate(2.5deg);box-shadow:6px 6px 0 #2A1548}
+.crown:before{content:"👑";position:absolute;top:-1.6rem;right:1.2rem;font-size:2.6rem;transform:rotate(12deg)}
+.count{display:flex;gap:.6rem;margin:.8rem 0}
+.count div{background:#fff;border:2px solid #2A1548;border-radius:12px;padding:.5rem .3rem;text-align:center;flex:1;font:800 1.9rem "Bricolage Grotesque",sans-serif;line-height:1}
+.count small{display:block;font:500 .7rem "DM Sans",sans-serif;margin-top:.3rem}
+.tag{display:inline-block;background:var(--mint);color:#0d2b25;font-weight:700;font-size:.8rem;padding:.15rem .6rem;border-radius:99px;margin-bottom:.6rem}
+.tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
+.tabs button{font:500 .95rem "DM Sans",sans-serif;border:2px solid var(--line);background:var(--card);color:var(--ink);padding:.35rem .9rem;border-radius:99px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+/* puzzle */
+.play{display:grid;gap:1.5rem}@media(min-width:800px){.play{grid-template-columns:auto 1fr}}
+#board{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(320px,100%);aspect-ratio:1;background:var(--ink);padding:6px;border-radius:16px}
+#board button{border:0;border-radius:10px;font:800 2rem "Bricolage Grotesque",sans-serif;background:var(--pri);color:#2A1548;cursor:pointer}
+#board button.e{background:transparent;cursor:default}
+#board button:nth-child(even):not(.e){background:var(--mint)}
+.stats{display:flex;gap:1.5rem;margin:.8rem 0;font-weight:700}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:.45rem .3rem;border-bottom:1px solid var(--line)}
+/* showcase */
+.vid{width:100%;aspect-ratio:9/16;max-height:340px;background:#3b2263;border-radius:12px;object-fit:cover;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;text-align:center;padding:1rem}
+.stars button{background:none;border:0;font-size:1.4rem;cursor:pointer;color:var(--line);padding:0 .1rem}
+.stars button.on{color:var(--pri)}
+[data-tip]{position:relative}
+[data-tip]:hover:after,[data-tip]:focus-visible:after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font:500 .8rem "DM Sans",sans-serif;padding:.4rem .7rem;border-radius:8px;width:max-content;max-width:220px;text-align:center;z-index:9;pointer-events:none}
+label{display:block;font-weight:700;margin:.8rem 0 .3rem}
+input,textarea,select{width:100%;font:inherit;padding:.6rem .8rem;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+input[aria-invalid="true"],textarea[aria-invalid="true"],select[aria-invalid="true"]{border-color:#D6336C}
+.msg{margin-top:.8rem;padding:.7rem 1rem;border-radius:10px;font-weight:500}
+.msg.ok{background:#D8F5EE;color:#0d3b30}.msg.err{background:#FFE0EA;color:#5b0f2a}
+.empty{text-align:center;padding:1.5rem 1rem}.empty .big{font-size:2.4rem}
+.lead{border:2px solid var(--pri)}
+dialog{border:2px solid var(--ink);border-radius:18px;padding:1.5rem;max-width:400px;background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(15,8,30,.55)}
+.chk{display:flex;gap:.6rem;align-items:flex-start;font-weight:400;margin-top:1rem}.chk input{width:auto;margin-top:.3rem}
+.link{background:none;border:0;padding:0;font:inherit;color:var(--acc);text-decoration:underline;cursor:pointer}
+footer{border-top:1px solid var(--line);background:var(--card);color:var(--mute);margin-top:2rem}
+.ft{max-width:1080px;margin:auto;padding:2.5rem 1.2rem 1.5rem;display:grid;gap:2rem;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.ft h3{font-size:1rem;color:var(--ink);margin-bottom:.6rem}
+.ft ul{list-style:none;margin:0;padding:0;display:grid;gap:.35rem}
+.ft a,.ft .link{color:var(--mute);text-decoration:none}.ft a:hover,.ft .link:hover{color:var(--ink);text-decoration:underline}
+.soc{display:flex;flex-wrap:wrap;gap:.5rem}.soc a{border:1px solid var(--line);border-radius:99px;padding:.25rem .8rem;font-weight:500;color:var(--ink)}
+.copy{max-width:1080px;margin:auto;padding:1rem 1.2rem 1.5rem;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-size:.9rem}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+.pbar{height:6px;background:var(--line);border-radius:9px;overflow:hidden;margin-bottom:.4rem}.pbar i{display:block;height:100%;background:var(--pri);width:33%}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem}.chips label{margin:0;font-weight:500;border:2px solid var(--line);border-radius:99px;padding:.25rem .8rem;display:flex;gap:.4rem;align-items:center;cursor:pointer}.chips input{width:auto}
+.sso{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.6rem}.sso button{width:100%}
+.or{text-align:center;color:var(--mute);font-size:.9rem;margin:.6rem 0}
+.msg.info{background:var(--line);color:var(--ink)}
+#legal{width:calc(100% - 2rem);max-width:640px;max-height:82vh;overflow:auto}#lgB p,#lgB li{max-width:none}#lgB ul{padding-left:1.2rem}
+.av{width:96px;height:96px;border-radius:50%;overflow:hidden;background:var(--line);border:3px solid var(--pri);display:flex;align-items:center;justify-content:center;font:800 2rem "Bricolage Grotesque",sans-serif;flex:none}
+.hav{width:24px;height:24px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:.4rem}
+.pfhead{display:flex;gap:1.2rem;align-items:center;flex-wrap:wrap}
+.tabs a{font:500 .95rem "DM Sans",sans-serif;border:2px solid var(--line);background:var(--card);color:var(--ink);padding:.35rem .9rem;border-radius:99px;text-decoration:none}
+.tabs a[aria-current="page"]{background:var(--acc);border-color:var(--acc);color:#fff}
+.live{display:grid;gap:1rem}@media(min-width:800px){.live{grid-template-columns:1.6fr 1fr}}
+.stage{aspect-ratio:16/9;background:#1b0f2e;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#fff}
+.stage video{width:100%;height:100%;object-fit:cover}.stage .sub{color:#cdbfe6}
+#badge{margin:0;background:var(--line);color:var(--ink)}#badge.on{background:#E5334B;color:#fff}
+#chatLog{height:260px;overflow:auto;margin-bottom:.8rem}
+#toast{position:fixed;left:50%;bottom:calc(1rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;max-width:90%}
+</style>
+</head>
+<body>
+<header><div class="bar">
+<a class="logo" href="#home">Puzzlecrown 👑</a>
+<nav aria-label="Main"><a href="#home">Home</a><a href="#play">Play</a><a href="#showcase">Showcase</a><a href="#awards">Awards night</a><a href="#store">Store</a><a href="#gist">Community gist</a><a href="#contact">About &amp; contact</a></nav>
+<div class="row"><a class="btn alt" id="authLink" href="#account">Sign in</a><button class="btn alt" id="cartBtn" aria-label="Open cart">🛒 <span id="cartN">0</span></button></div>
+</div></header>
+<main>
+
+<section class="page" id="home">
+<div class="hero">
+<div><h1>Play. Create. Wear the crown.</h1>
+<p class="sub" style="font-size:1.15rem">Beat the puzzle, share your craft or skill, and win real prizes at our Awards night.</p>
+<div class="row"><a class="btn" href="#play">Try it free</a><a class="btn alt" href="#awards">See how it works</a></div></div>
+<div class="crown"><h3>Awards night 2026</h3>
+<div class="count"><div><span id="d">0</span><small>days</small></div><div><span id="h">0</span><small>hrs</small></div><div><span id="m">0</span><small>min</small></div><div><span id="s">0</span><small>sec</small></div></div>
+<p style="margin:0">Sat, 12 Dec · [Venue name]. Winners collect their prizes on stage.</p></div>
+</div>
+<div class="grid">
+<div class="card"><span class="tag">Play</span><h3>Solve the puzzle</h3><p class="sub">Fewest moves and fastest time top the board.</p><a href="#play">Start playing</a></div>
+<div class="card"><span class="tag">Create</span><h3>Show your skill</h3><p class="sub">Upload a short video. The crowd likes and rates it.</p><a href="#showcase">Open the showcase</a></div>
+<div class="card"><span class="tag">Win</span><h3>Get rewarded</h3><p class="sub">Category winners are picked from the scores and celebrated in person.</p><a href="#awards">See the front-runners</a></div>
+</div>
+</section>
+
+<section class="page" id="play">
+<h2>Slide the puzzle</h2><p class="sub">Put the tiles in order, 1 to 8. Tap a tile next to the gap to slide it.</p>
+<div class="play">
+<div><div id="board" aria-label="Sliding puzzle"></div>
+<div class="stats"><span>Moves: <span id="mv">0</span></span><span>Time: <span id="tm">0</span>s</span></div>
+<div class="row"><button class="btn alt" id="shuf">New puzzle</button></div></div>
+<div>
+<div class="card" id="winBox" hidden><h3>You solved it! 🎉</h3><p class="sub" style="margin:0 0 .6rem">Add your name to join the leaderboard.</p>
+<div class="row"><input id="pName" placeholder="Your name" maxlength="24" style="max-width:220px" aria-label="Your name"><button class="btn" id="pSave">Post my score</button></div><div id="pMsg" role="status"></div></div>
+<h3 style="margin-top:1rem">Leaderboard</h3><div id="lb"></div>
+</div></div>
+</section>
+
+<section class="page" id="showcase">
+<div class="tabs"><a href="#showcase" aria-current="page">Showcase</a><a href="#live">Live streams 🔴</a></div>
+<h2>Showcase</h2><p class="sub">Crafts, skills and tricks in short videos or photos. Like it, rate it, and the best in each category go to Awards night.</p>
+<div class="card" style="margin-bottom:1rem"><h3>Share your video or photo</h3>
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+<div><label for="uT">Title</label><input id="uT" maxlength="50"></div>
+<div><label for="uN">Your name</label><input id="uN" maxlength="24"></div>
+<div><label for="uC">Category</label><select id="uC"><option value="">Choose one</option></select></div>
+<div><label for="uF">Video or photo (videos up to 60 sec)</label><input id="uF" type="file" accept="video/*,image/png,image/jpeg,image/webp"></div></div>
+<div class="row" style="margin-top:1rem"><button class="btn" id="uGo">Upload</button></div><div id="uMsg" role="status"></div></div>
+<div class="tabs" id="tabs" role="group" aria-label="Category filter"></div>
+<div class="grid" id="reels"></div>
+<p class="sub" style="margin-top:1rem">How the score works: average rating × 20 + likes. Uploads stay in your browser for this demo.</p>
+</section>
+
+<section class="page" id="awards">
+<div class="tabs"><a href="#awards" aria-current="page">Awards night</a><a href="#live">Live streams 🔴</a></div>
+<h2>Awards night</h2><p class="sub">Winners are picked from the live scores, then celebrated in person with a prize. Here's who's leading right now.</p>
+<div class="grid" id="fr"></div>
+<div class="card" style="margin-top:1rem"><h3>Watch Awards night live</h3><p class="sub">We'll stream the ceremony from the venue so you can cheer on the winners from anywhere.</p><a class="btn" href="#live">Open live streams</a></div>
+<div class="card" style="margin-top:1rem"><h3>Past winners</h3><div class="empty"><div class="big">🏆</div><p class="sub" style="margin:0 auto">Our first winners will show up here after Awards night.</p></div></div>
+</section>
+
+<section class="page" id="store"><h2>Store</h2><p class="sub">Crown-worthy merch. Add a few things and check out when you're ready.</p><div class="grid" id="items"></div></section>
+
+<section class="page" id="gist">
+<h2>Community gist</h2><p class="sub">Share a tip, a shout-out or a question.</p>
+<div class="card" style="margin-bottom:1rem"><label for="gN">Your name</label><input id="gN" maxlength="24"><label for="gT">What's on your mind?</label><textarea id="gT" rows="3" maxlength="240"></textarea>
+<div class="row" style="margin-top:1rem"><button class="btn" id="gGo">Post to the gist</button></div><div id="gMsg" role="status"></div></div>
+<div id="posts"></div></section>
+
+<section class="page" id="contact">
+<h2>Hi, we're Puzzlecrown.</h2>
+<p>We started Puzzlecrown because talented people rarely get a stage. Now we're a small team helping players and makers earn recognition online, and take home a real prize.</p>
+<h3>Say hi 👋</h3><p class="sub">Questions, ideas, or just want to chat? We'd love to hear from you.</p>
+<div class="card" style="max-width:520px"><label for="cN">Name</label><input id="cN"><label for="cE">Email</label><input id="cE" type="email"><label for="cT">Message</label><textarea id="cT" rows="4"></textarea>
+<div class="row" style="margin-top:1rem"><button class="btn" id="cGo">Send message</button></div><div id="cMsg" role="status"></div></div>
+</section>
+
+<section class="page" id="account">
+<div style="max-width:580px">
+<div id="authForms">
+<h2>Join the crown club</h2><p class="sub">Sign in with your email to post scores and upload videos under your name.</p>
+<div class="tabs" id="aTabs" role="group" aria-label="Account options"><button data-m="in" aria-pressed="true">Sign in</button><button data-m="up" aria-pressed="false">Sign up</button></div>
+<div class="card" id="formIn">
+<label for="siE">Email</label><input id="siE" type="email" autocomplete="email">
+<label for="siP">Password</label><input id="siP" type="password" autocomplete="current-password">
+<div class="row" style="margin-top:1rem"><button class="btn" id="siGo">Sign in</button><button class="link" id="forgot">Forgot password?</button></div><div id="siMsg" role="status"></div>
+<div class="row" id="bioRow" style="margin-top:.8rem"><button class="btn alt" id="bioGo">Sign in with face or fingerprint</button></div>
+</div>
+<div class="card" id="formUp" hidden>
+<p class="sub" style="margin:0 0 .4rem" id="stepLbl">Step 1 of 3</p><div class="pbar"><i id="prog"></i></div>
+<div class="stp" data-s="1">
+<div class="two"><div><label for="suF">First name</label><input id="suF" autocomplete="given-name"></div><div><label for="suL">Last name</label><input id="suL" autocomplete="family-name"></div></div>
+<label for="suU">Username</label><input id="suU" autocomplete="username" placeholder="e.g. crown_ada" maxlength="20">
+<label for="suE">Email</label><input id="suE" type="email" autocomplete="email">
+<label for="suM">Mobile number (optional)</label><input id="suM" type="tel" autocomplete="tel" placeholder="+234 800 000 0000">
+<label for="suP">Password (8+ characters)</label><input id="suP" type="password" autocomplete="new-password">
+<label for="suP2">Confirm password</label><input id="suP2" type="password" autocomplete="new-password">
+</div>
+<div class="stp" data-s="2" hidden>
+<label for="suD">Date of birth</label><input id="suD" type="date" autocomplete="bday"><p class="sub" style="font-size:.85rem;margin:.3rem 0 0">You must be 13 or older. Prizes at Awards night are for players 18 and over.</p>
+<label for="suG">Gender (optional)</label><select id="suG"><option value="">Prefer not to say</option><option>Female</option><option>Male</option><option>Custom</option></select>
+<div class="two"><div><label for="suCo">Country</label><input id="suCo" autocomplete="country-name"></div><div><label for="suCi">City (optional)</label><input id="suCi" autocomplete="address-level2"></div></div>
+</div>
+<div class="stp" data-s="3" hidden>
+<label for="suJ">What do you do? (optional)</label><input id="suJ" placeholder="e.g. Student, designer, teacher" maxlength="50">
+<label for="suB">Short bio (optional)</label><textarea id="suB" rows="2" maxlength="160"></textarea>
+<label id="intL">What are you into?</label><div class="chips" id="suI" role="group" aria-labelledby="intL"><label><input type="checkbox" value="Puzzles">Puzzles</label><label><input type="checkbox" value="Crafts">Crafts</label><label><input type="checkbox" value="Skills">Skills</label><label><input type="checkbox" value="Events">Events</label></div>
+<label for="suS">X or Instagram handle (optional)</label><input id="suS" placeholder="@yourhandle" maxlength="30">
+<label for="suH">How did you hear about us? (optional)</label><select id="suH"><option value="">Choose one</option><option>A friend</option><option>Social media</option><option>An event</option><option>Search</option><option>Other</option></select>
+<label class="chk" for="suT"><input id="suT" type="checkbox"><span>I agree to the <button class="link" data-legal="Terms of use">Terms</button> and <button class="link" data-legal="Privacy policy">Privacy policy</button>.</span></label>
+<label class="chk" for="suK"><input id="suK" type="checkbox"><span>Send me news about events and prizes (optional).</span></label>
+</div>
+<div class="row" style="margin-top:1rem"><button class="btn alt" id="suBk" hidden>Back</button><button class="btn" id="suGo">Continue</button></div><div id="suMsg" role="status"></div>
+</div>
+<p class="sub" style="margin-top:1rem;font-size:.85rem">Demo only: accounts live in your browser and vanish on reload.</p>
+</div>
+<div id="authIn" hidden><h2 id="hi"></h2><p class="sub">You're signed in. Your name is filled in on the puzzle, showcase and community forms.</p>
+<div class="row"><a class="btn" href="#profile">My profile</a><a class="btn alt" href="#play">Play a puzzle</a><a class="btn alt" href="#showcase">Upload a video</a><button class="btn alt" id="out">Sign out</button></div></div>
+</div>
+</section>
+<section class="page" id="profile">
+<div id="pfOut" hidden><h2>Your profile</h2><div class="card empty"><div class="big">🔒</div><h3>Sign in to see your profile</h3><p class="sub" style="margin:0 auto 1rem">Your details are private to your account.</p><a class="btn" href="#account">Sign in</a></div></div>
+<div id="pfIn" hidden style="max-width:680px">
+<h2>Your profile</h2>
+<div class="card pfhead"><div id="pfAv" class="av"></div><div>
+<p style="margin:0"><strong id="pfName"></strong> · @<span id="pfUser"></span></p>
+<p class="sub" style="margin:0 0 .6rem;font-size:.9rem">Member ID <span id="pfId"></span> · joined <span id="pfJoin"></span></p>
+<div class="row"><button class="btn alt" id="pfPicBtn">Upload picture</button><button class="btn alt" id="pfRm" hidden>Remove picture</button><button class="btn alt" id="pfDl" hidden>Download picture</button><input id="pfPic" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><div id="pfPicMsg" role="status"></div></div></div>
+<div class="card" style="margin-top:1rem"><h3>Your details</h3>
+<div class="two"><div><label for="pfF">First name</label><input id="pfF" autocomplete="given-name"></div><div><label for="pfL">Last name</label><input id="pfL" autocomplete="family-name"></div></div>
+<label for="pfU">Username</label><input id="pfU" maxlength="20">
+<label for="pfE">Email</label><input id="pfE" type="email">
+<label for="pfM">Mobile number (optional)</label><input id="pfM" type="tel">
+<div class="two"><div><label for="pfD">Date of birth</label><input id="pfD" type="date"></div><div><label for="pfG">Gender (optional)</label><select id="pfG"><option value="">Prefer not to say</option><option>Female</option><option>Male</option><option>Custom</option></select></div></div>
+<div class="two"><div><label for="pfCo">Country</label><input id="pfCo"></div><div><label for="pfCi">City (optional)</label><input id="pfCi"></div></div>
+<label for="pfJ">What do you do? (optional)</label><input id="pfJ" maxlength="50">
+<label for="pfB">Short bio (optional)</label><textarea id="pfB" rows="2" maxlength="160"></textarea>
+<label id="pfIL">What are you into?</label><div class="chips" id="pfI" role="group" aria-labelledby="pfIL"><label><input type="checkbox" value="Puzzles">Puzzles</label><label><input type="checkbox" value="Crafts">Crafts</label><label><input type="checkbox" value="Skills">Skills</label><label><input type="checkbox" value="Events">Events</label></div>
+<label for="pfS">X or Instagram handle (optional)</label><input id="pfS" maxlength="30">
+<label class="chk" for="pfK"><input id="pfK" type="checkbox"><span>Send me news about events and prizes.</span></label>
+<div class="row" style="margin-top:1rem"><button class="btn" id="pfSave">Save changes</button></div><div id="pfMsg" role="status"></div></div>
+<div class="card" style="margin-top:1rem"><h3>Face or fingerprint sign-in</h3>
+<p class="sub">Use your device's Face ID, fingerprint or Windows Hello to sign in faster. Your face and fingerprint stay on your device. Puzzlecrown never receives or stores them.</p>
+<div class="row"><button class="btn" id="bioOn">Turn on</button><button class="btn alt" id="bioOff" hidden>Turn off</button></div><div id="bioMsg" role="status"></div></div>
+<div class="card" style="margin-top:1rem"><h3>My activity</h3><p class="sub" id="pfAct" style="margin:0"></p></div>
+</div></section>
+<section class="page" id="live">
+<div class="tabs"><a href="#showcase">Showcase</a><a href="#awards">Awards night</a><a href="#live" aria-current="page">Live streams 🔴</a></div>
+<h2>Live streams</h2><p class="sub">Watch Awards night and showcase hangouts live, and cheer along in the chat.</p>
+<div class="live"><div>
+<div class="card"><div class="stage"><video id="lv" autoplay muted playsinline hidden></video><div id="off" class="empty"><div class="big">📺</div><h3>No one is live right now</h3><p class="sub" style="margin:0 auto">Check the schedule below, or go live yourself.</p></div></div>
+<div class="row" style="margin-top:.8rem"><span class="tag" id="badge">Offline</span><button class="btn" id="goLive">Go live</button><button class="btn alt" id="endLive" hidden>End stream</button></div><div id="lvMsg" role="status"></div></div>
+<div class="card" style="margin-top:1rem"><h3>Coming up</h3><div id="sched"></div></div></div>
+<div class="card"><h3>Live chat</h3><div id="chatLog" aria-live="polite"></div><div class="row" style="flex-wrap:nowrap"><input id="chatIn" placeholder="Say something nice" maxlength="140" aria-label="Chat message"><button class="btn" id="chatSend">Send</button></div></div></div>
+<p class="sub" style="margin-top:1rem">How this works: "Go live" shows your camera on your own screen as a preview. Streaming to everyone needs a streaming service connected, and then viewers watch here.</p>
+</section>
+</main>
+<footer>
+<div class="ft">
+<div><h3>Puzzlecrown 👑</h3><p style="margin:0">Play, create and win. Real prizes for real talent, handed out at Awards night.</p></div>
+<div><h3>Explore</h3><ul><li><a href="#play">Play</a></li><li><a href="#showcase">Showcase</a></li><li><a href="#awards">Awards night</a></li><li><a href="#live">Live streams</a></li><li><a href="#store">Store</a></li></ul></div>
+<div><h3>Company</h3><ul><li><a href="#contact">About us</a></li><li><a href="#contact">Contact</a></li><li><a href="#gist">Community gist</a></li><li><a href="#account">Sign in or sign up</a></li></ul></div>
+<div><h3>Legal</h3><ul><li><button class="link" data-legal="Terms of use">Terms of use</button></li><li><button class="link" data-legal="Privacy policy">Privacy policy</button></li><li><button class="link" data-legal="Cookie policy">Cookie policy</button></li><li><button class="link" data-legal="Contest rules">Contest rules</button></li></ul></div>
+<div><h3>Follow us</h3><div class="soc">
+<a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">Instagram</a>
+<a href="https://x.com/" target="_blank" rel="noopener noreferrer">X</a>
+<a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">Facebook</a>
+<a href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer">YouTube</a>
+<a href="https://www.tiktok.com/" target="_blank" rel="noopener noreferrer">TikTok</a>
+<a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer">LinkedIn</a></div></div>
+</div>
+<div class="copy"><span>© 2026 Puzzlecrown. All rights reserved.</span><span>Made with 💜 by the Puzzlecrown team</span></div>
+</footer>
+<dialog id="legal" aria-labelledby="lgT"><h3 id="lgT"></h3><p class="msg info" style="margin-top:0">Draft text. Fill in the [brackets] and have a lawyer review it before launch.</p><div id="lgB"></div><button class="btn" id="lgX">Got it</button></dialog>
+
+<div id="toast" role="status"></div>
+<dialog id="cart"><h3>Your cart</h3><div id="cartBody"></div>
+<div class="row" style="margin-top:1rem"><button class="btn" id="chk">Check out</button><button class="btn alt" id="clr">Clear cart</button><button class="btn alt" id="cls">Go back</button></div></dialog>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const money=n=>"$"+n.toFixed(2);
+function route(){const id=(location.hash||"#home").slice(1),pg=$("#"+id)&&$("#"+id).classList.contains("page")?id:"home";
+$$(".page").forEach(p=>p.classList.toggle("on",p.id===pg));
+$$("nav a").forEach(a=>a.getAttribute("href")==="#"+pg?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current"));
+if(pg!=="live"&&ls)stopLive();if(pg==="awards")drawAwards();if(pg==="profile")drawProfile();window.scrollTo(0,0)}
+addEventListener("hashchange",route);
+
+/* countdown */
+const target=new Date("2026-12-12T18:00:00");
+function tick(){const ms=Math.max(0,target-new Date()),f=(v,x)=>$(v).textContent=x;
+f("#d",Math.floor(ms/864e5));f("#h",Math.floor(ms%864e5/36e5));f("#m",Math.floor(ms%36e5/6e4));f("#s",Math.floor(ms%6e4/1e3))}
+setInterval(tick,1000);tick();
+
+/* puzzle */
+let b=[],mv=0,secs=0,timer=null,solved=false,lb=[{n:"Ada",m:24,t:41},{n:"Tunde",m:31,t:58},{n:"Zara",m:38,t:73}];
+function shuffle(){b=[1,2,3,4,5,6,7,8,0];let last=-1;
+for(let i=0;i<80;i++){const z=b.indexOf(0),nb=[z-3,z+3,z%3?z-1:-1,z%3<2?z+1:-1].filter(x=>x>=0&&x<9&&x!==last);const r=nb[Math.floor(Math.random()*nb.length)];[b[z],b[r]]=[b[r],b[z]];last=z}
+mv=0;secs=0;solved=false;clearInterval(timer);timer=null;$("#winBox").hidden=true;$("#pMsg").innerHTML="";draw()}
+function draw(){$("#board").innerHTML=b.map((v,i)=>`<button data-i="${i}" class="${v?"":"e"}" ${v?"":"tabindex='-1' aria-hidden='true'"} aria-label="${v?"Tile "+v:"Gap"}">${v||""}</button>`).join("");$("#mv").textContent=mv;$("#tm").textContent=secs}
+$("#board").onclick=e=>{const t=e.target.closest("button");if(!t||solved)return;const i=+t.dataset.i,z=b.indexOf(0);
+if(![i-3,i+3].includes(z)&&!((z===i-1&&i%3)||(z===i+1&&z%3))&&!(Math.abs(i-z)===1&&Math.floor(i/3)===Math.floor(z/3)))return;
+if(!b[i])return;
+[b[i],b[z]]=[b[z],b[i]];mv++;if(!timer)timer=setInterval(()=>{secs++;$("#tm").textContent=secs},1000);draw();
+if(b.join()==="1,2,3,4,5,6,7,8,0"){solved=true;clearInterval(timer);$("#winBox").hidden=false}};
+$("#shuf").onclick=shuffle;
+$("#pSave").onclick=()=>{const n=$("#pName").value.trim();if(!n){$("#pName").setAttribute("aria-invalid","true");$("#pMsg").innerHTML='<div class="msg err">Add your name to post your score.</div>';return}
+lb.push({n,m:mv,t:secs,uid:me&&me.id});lb.sort((a,c)=>a.m-c.m||a.t-c.t);$("#pName").value="";$("#pMsg").innerHTML='<div class="msg ok">Posted! You\'re on the board.</div>';$("#pSave").disabled=true;drawLB()};
+function drawLB(){$("#lb").innerHTML=lb.length?`<table><tr><th>#</th><th>Player</th><th>Moves</th><th>Time</th></tr>${lb.slice(0,8).map((r,i)=>`<tr><td>${i+1}${i?"":" 👑"}</td><td>${esc(r.n)}</td><td>${r.m}</td><td>${r.t}s</td></tr>`).join("")}</table>`:`<div class="empty"><div class="big">🧩</div><p class="sub" style="margin:0">No scores yet. Solve the puzzle to go first.</p></div>`}
+$("#shuf").addEventListener("click",()=>{$("#pSave").disabled=false});
+
+/* showcase */
+const cats=["Crafts","Skills","Puzzle tricks"];let cat="All";
+let reels=[{t:"Paper crown in 60 seconds",n:"Zara",c:"Crafts",l:12,r:[5,4,5],my:0,src:""},{t:"Juggling three cubes",n:"Kofi",c:"Skills",l:9,r:[4,4],my:0,src:""},{t:"Solve it blindfolded",n:"Ada",c:"Puzzle tricks",l:15,r:[5,5,4],my:0,src:""}];
+const avg=x=>x.r.length?x.r.reduce((a,c)=>a+c,0)/x.r.length:0,score=x=>Math.round(avg(x)*20+x.l);
+$("#uC").innerHTML+=cats.map(c=>`<option>${c}</option>`).join("");
+function drawTabs(){$("#tabs").innerHTML=["All",...cats].map(c=>`<button aria-pressed="${c===cat}" data-c="${c}">${c}</button>`).join("")}
+$("#tabs").onclick=e=>{const t=e.target.closest("[data-c]");if(t){cat=t.dataset.c;drawTabs();drawReels()}};
+function drawReels(){const list=reels.map((x,i)=>({x,i})).filter(o=>cat==="All"||o.x.c===cat);
+$("#reels").innerHTML=list.length?list.map(({x,i})=>`<div class="card"><div class="vid">${media(x)}</div>
+<h3 style="margin-top:.8rem">${esc(x.t)}</h3><p class="sub" style="margin:0 0 .4rem">${esc(x.n)} · ${x.c} · score ${score(x)}</p>
+<div class="row"><button class="btn alt" data-like="${i}" aria-label="Like">👍 ${x.l}</button><span class="stars" role="group" aria-label="Rate">${[1,2,3,4,5].map(s=>`<button data-rate="${i}" data-s="${s}" class="${s<=x.my?"on":""}" aria-label="${s} stars">★</button>`).join("")}</span></div>
+<p class="sub" style="margin:.3rem 0 0;font-size:.85rem">${avg(x)?avg(x).toFixed(1)+" avg from "+x.r.length+" ratings":"No ratings yet"}</p>${dl(x,i)}</div>`).join("")
+:`<div class="card empty" style="grid-column:1/-1"><div class="big">🎬</div><h3>Nothing here yet</h3><p class="sub" style="margin:0 auto">Be the first to upload in this category.</p></div>`}
+$("#reels").onclick=e=>{const l=e.target.closest("[data-like]"),r=e.target.closest("[data-rate]"),d=e.target.closest("[data-dl]");if(d){const x=reels[d.dataset.dl];saveFile(x.file,fname(x.t,x.file));return}
+if(l){const x=reels[l.dataset.like];x.liked=!x.liked;x.l+=x.liked?1:-1;drawReels()}
+if(r){const x=reels[r.dataset.rate],s=+r.dataset.s;if(x.my)x.r.splice(x.r.indexOf(x.my),1);x.r.push(s);x.my=s;drawReels()}};
+$("#uGo").onclick=()=>{const t=$("#uT"),n=$("#uN"),c=$("#uC"),f=$("#uF"),m=$("#uMsg"),file=f.files[0];
+const bad=[t,n,c,f].filter(x=>x===f?!file:!x.value.trim());[t,n,c,f].forEach(x=>x.setAttribute("aria-invalid",bad.includes(x)));
+if(bad.length){m.innerHTML='<div class="msg err">Add a title, your name, a category and a video or photo, then try again.</div>';return}
+const isImg=/^image\/(png|jpeg|webp)$/.test(file.type),isVid=file.type.startsWith("video/");
+if(!isImg&&!isVid){m.innerHTML='<div class="msg err">Choose a video, or a PNG, JPG or WebP photo.</div>';return}
+if(isImg&&file.size>10*1024*1024){m.innerHTML='<div class="msg err">That photo is over 10 MB. Choose a smaller one.</div>';return}
+const url=URL.createObjectURL(file);
+const add=()=>{reels.unshift({uid:me&&me.id,t:t.value.trim(),n:n.value.trim(),c:c.value,l:0,r:[],my:0,src:url,file,kind:isImg?"image":"video"});t.value=n.value=f.value="";c.value="";
+m.innerHTML=`<div class="msg ok">Uploaded! Your ${isImg?"photo":"video"} is live in the showcase.</div>`;cat="All";drawTabs();drawReels()};
+if(isImg){add();return}
+const v=document.createElement("video");v.preload="metadata";
+v.onloadedmetadata=()=>{if(v.duration>60){URL.revokeObjectURL(url);m.innerHTML='<div class="msg err">That video is over 60 seconds. Trim it and upload again.</div>';return}add()};
+v.onerror=()=>{m.innerHTML=`<div class="msg err">We couldn't read that file. Try an MP4 or WebM video.</div>`};v.src=url};
+
+/* awards */
+function drawAwards(){$("#fr").innerHTML=cats.map(c=>{const top=reels.filter(x=>x.c===c).sort((a,d)=>score(d)-score(a))[0];
+return `<div class="card lead"><span class="tag">${c}</span><h3>${top?esc(top.t):"No entries yet"}</h3><p class="sub" style="margin:0">${top?`${esc(top.n)} · score ${score(top)}`:"Upload a video to lead this category."}</p></div>`}).join("")
++`<div class="card lead"><span class="tag">Puzzle champion</span><h3>${lb.length?esc(lb[0].n):"No scores yet"}</h3><p class="sub" style="margin:0">${lb.length?lb[0].m+" moves · "+lb[0].t+"s":"Solve the puzzle to lead."}</p></div>`}
+
+/* store */
+const items=[{n:"Crown tee",p:15},{n:"Sticker pack",p:4},{n:"Enamel mug",p:12},{n:"Tote bag",p:9}];let cart={};
+$("#items").innerHTML=items.map((x,i)=>`<div class="card"><h3>${x.n}</h3><p class="sub">${money(x.p)}</p><button class="btn" data-i="${i}">Add to cart</button></div>`).join("");
+$("#items").onclick=e=>{const t=e.target.closest("[data-i]");if(!t)return;cart[t.dataset.i]=(cart[t.dataset.i]||0)+1;cn();t.textContent="Added!";setTimeout(()=>t.textContent="Add to cart",900)};
+const cn=()=>$("#cartN").textContent=Object.values(cart).reduce((a,c)=>a+c,0);
+function drawCart(){const k=Object.keys(cart);$("#cartBody").innerHTML=k.length?k.map(i=>`<p style="margin:.3rem 0">${items[i].n} × ${cart[i]} · ${money(items[i].p*cart[i])}</p>`).join("")+`<p><strong>Total: ${money(k.reduce((a,i)=>a+items[i].p*cart[i],0))}</strong></p>`:`<div class="empty"><div class="big">🛍️</div><h3>Your cart is empty</h3><p class="sub" style="margin:0 auto">Add a tee or a mug to get started.</p></div>`;$("#chk").disabled=$("#clr").disabled=!k.length}
+$("#cartBtn").onclick=()=>{drawCart();$("#cart").showModal()};$("#cls").onclick=()=>$("#cart").close();
+$("#clr").onclick=()=>{cart={};cn();drawCart()};
+$("#chk").onclick=()=>{cart={};cn();$("#cartBody").innerHTML='<div class="msg ok">Thanks! Your order is in. We\'ll email your receipt shortly.</div>';$("#chk").disabled=$("#clr").disabled=true};
+
+/* gist */
+let posts=[{n:"Tunde",t:"Tip: plan the corners first when you slide the puzzle.",l:3}];
+function drawPosts(){$("#posts").innerHTML=posts.length?posts.map((p,i)=>`<div class="card row" style="margin-bottom:.8rem;justify-content:space-between;flex-wrap:nowrap"><div><strong>${esc(p.n)}</strong><p style="margin:.2rem 0 0">${esc(p.t)}</p></div><button class="btn alt" data-l="${i}" aria-label="Like">👍 ${p.l}</button></div>`).join(""):`<div class="card empty"><div class="big">💬</div><h3>No gist yet</h3><p class="sub" style="margin:0 auto">Be the first to share something.</p></div>`}
+$("#posts").onclick=e=>{const t=e.target.closest("[data-l]");if(t){posts[t.dataset.l].l++;drawPosts()}};
+$("#gGo").onclick=()=>{const n=$("#gN"),t=$("#gT");[n,t].forEach(x=>x.setAttribute("aria-invalid",!x.value.trim()));
+if(!n.value.trim()||!t.value.trim()){$("#gMsg").innerHTML='<div class="msg err">Add your name and a message to post.</div>';return}
+posts.unshift({n:n.value.trim(),t:t.value.trim(),l:0});n.value=t.value="";$("#gMsg").innerHTML='<div class="msg ok">Posted! Thanks for sharing.</div>';drawPosts()};
+
+/* contact */
+$("#cGo").onclick=()=>{const f=[$("#cN"),$("#cE"),$("#cT")],bad=f.filter(x=>!x.value.trim()||(x.type==="email"&&!/^\S+@\S+\.\S+$/.test(x.value)));
+f.forEach(x=>x.setAttribute("aria-invalid",bad.includes(x)));
+$("#cMsg").innerHTML=bad.length?'<div class="msg err">Check your name, a valid email and your message, then try again.</div>':'<div class="msg ok">Thanks! We got your message and will reply within 2 working days.</div>';if(!bad.length)f.forEach(x=>x.value="")};
+
+const LEGAL={"Terms of use": "<p><strong>Last updated:<\/strong> [date]<\/p><p><strong>1. About us.<\/strong> Puzzlecrown (\"we\", \"us\") is run by [legal business name], [address], [country]. By using puzzlecrown.[com] you agree to these Terms.<\/p><p><strong>2. Your account.<\/strong> You must be at least 13 to create an account. Give us accurate details and keep your password safe. You are responsible for what happens under your account. Tell us at [email] if you think someone else has used it.<\/p><p><strong>3. What you can post.<\/strong> You can upload short videos (up to 60 seconds), posts and ratings. You must own what you upload or have permission to share it. Do not post anything unlawful, hateful, sexual, violent, misleading, or that infringes someone else's rights or privacy. We may remove content and suspend accounts that break these rules.<\/p><p><strong>4. Your content and our licence.<\/strong> You keep ownership of your content. You give us a non-exclusive, worldwide, royalty-free licence to host, display and promote it on Puzzlecrown and our social channels for as long as it is on the platform [and for a reasonable period after you delete it, for backups]. Other members can download your uploads for personal viewing only. They may not re-post, sell or reuse them without your permission.<\/p><p><strong>5. Fair play.<\/strong> Do not use bots, fake accounts, vote swapping or any trick to inflate likes, ratings or leaderboard scores. We may remove scores or entries we believe are unfair.<\/p><p><strong>6. Store purchases.<\/strong> Prices, delivery and returns are described at checkout and in [returns policy link]. [Add payment provider and refund terms.]<\/p><p><strong>7. Our rights.<\/strong> The Puzzlecrown name, logo, design and software belong to us. Please don't copy them without permission.<\/p><p><strong>8. Availability and liability.<\/strong> We try to keep the site running but can't promise it will always be available or error-free. To the extent the law allows, we are not liable for indirect or consequential losses. Nothing here limits liability that cannot be limited by law.<\/p><p><strong>9. Ending your account.<\/strong> You can close your account at any time. We may suspend or close accounts that break these Terms.<\/p><p><strong>10. Changes.<\/strong> We may update these Terms. If the changes are important, we'll tell you before they take effect.<\/p><p><strong>11. Law and disputes.<\/strong> These Terms are governed by the laws of [country/state]. Disputes go to the courts of [place], unless the law where you live says otherwise.<\/p><p><strong>12. Contact.<\/strong> [email] · [postal address]<\/p>", "Privacy policy": "<p><strong>Last updated:<\/strong> [date]<\/p><p><strong>Who we are.<\/strong> [Legal business name] is the controller of your personal data. Contact: [privacy email]. [Data protection officer, if required.]<\/p><p><strong>What we collect<\/strong><\/p><ul><li><strong>Account details:<\/strong> first and last name, username, email, password (stored only in encrypted form), optional mobile number.<\/li><li><strong>Profile details:<\/strong> date of birth, country, optional city, optional gender, occupation, bio, interests, social handle, and how you heard about us.<\/li><li><strong>Profile picture:<\/strong> if you upload one.<\/li><li><strong>Face or fingerprint sign-in:<\/strong> handled by your device. We never receive or store your face or fingerprint, only a passkey (a public key) that lets your device prove it is you.<\/li><li><strong>Live streams and chat:<\/strong> if you go live or chat, your video, audio and messages are visible to viewers. [Say whether streams are recorded and for how long.]<\/li><li><strong>Activity:<\/strong> puzzle scores, videos, likes, ratings, posts and orders.<\/li><li><strong>Technical data:<\/strong> device, browser, IP address and cookies (see the Cookie policy).<\/li><\/ul><p><strong>Why we use it<\/strong><\/p><ul><li>To run your account, the puzzle leaderboard, the showcase and Awards night. <em>(Performing our contract with you.)<\/em><\/li><li>To check your age and prize eligibility. <em>(Legal obligation / legitimate interest.)<\/em><\/li><li>To contact you about prizes, orders and service changes. <em>(Contract.)<\/em><\/li><li>To send event and prize news, only if you tick the box. <em>(Consent, which you can withdraw at any time.)<\/em><\/li><li>To keep the site safe and prevent cheating. <em>(Legitimate interest.)<\/em><\/li><\/ul><p><strong>Who sees it.<\/strong> Your username, scores, videos and ratings are public on the site. We share data only with providers who help us run Puzzlecrown, such as hosting, email, payments and delivery, under contracts that protect it. Winners' names and prizes may be published (see the Contest rules). We do not sell your personal data.<\/p><p><strong>Where it goes.<\/strong> [State the countries where data is stored and the safeguards used for transfers.]<\/p><p><strong>How long we keep it.<\/strong> Account data until you close your account, plus [period] for legal and security reasons. Orders for [period] for tax records. [Adjust for your law.]<\/p><p><strong>Your rights.<\/strong> Depending on where you live, you can ask to see, correct, delete or export your data, object to certain uses, and withdraw consent. Email [privacy email]. You can also complain to your data protection authority, for example the [Nigeria Data Protection Commission / your regulator].<\/p><p><strong>Children.<\/strong> Puzzlecrown is not for children under 13, and we don't knowingly collect their data. If we learn we have, we will delete it. [Add parental-consent steps if your law sets an older age.]<\/p><p><strong>Security.<\/strong> We use encryption, access controls and secure providers. No system is perfectly secure, so please use a strong, unique password.<\/p><p><strong>Changes.<\/strong> We'll post updates here and tell you about important ones.<\/p>", "Contest rules": "<p><strong>Last updated:<\/strong> [date]<\/p><p><strong>1. Who runs it.<\/strong> Organiser: [legal business name], [address].<\/p><p><strong>2. No purchase necessary.<\/strong> Entry is free. Buying from the store gives no advantage and doesn't improve your chances.<\/p><p><strong>3. Who can enter.<\/strong> People aged 18 or over who live in [eligible countries], with a Puzzlecrown account. [Under-18 rule: e.g. prizes for younger entrants are collected with a parent or guardian.] Staff, judges and their immediate family can't win.<\/p><p><strong>4. Categories and how to enter<\/strong><\/p><ul><li><strong>Puzzle champion:<\/strong> solve the sliding puzzle. Scores are ranked by fewest moves, then fastest time.<\/li><li><strong>Showcase categories:<\/strong> Crafts, Skills and Puzzle tricks. Upload one video of up to 60 seconds per entry, and up to [number] entries per person per category.<\/li><\/ul><p><strong>5. How winners are chosen.<\/strong> Showcase entries are scored by community votes: average star rating × 20, plus likes. [Optional: a judging panel adds a score of up to [number] points.] Winners are the top score in each category on [closing date and time, time zone]. Ties are broken by [rule, e.g. number of ratings, then earliest upload]. Skill and creativity decide the results, not chance.<\/p><p><strong>6. Fair play.<\/strong> Entries with fake accounts, bots, vote trading or copied work are removed. Our decision on disqualification is final.<\/p><p><strong>7. Prizes.<\/strong> [Describe each prize, its value and any alternatives.] Prizes are not transferable and have no cash alternative unless stated. Winners are responsible for any taxes on prizes.<\/p><p><strong>8. Awards night.<\/strong> Winners are announced at [event name] on [date] at [venue]. Winners are contacted by [method] at least [number] days before. If a winner can't attend, [rule: e.g. prize is shipped, or awarded to the next-highest score]. Travel costs are [covered / not covered].<\/p><p><strong>9. Your entry.<\/strong> You confirm your video is your own work and doesn't break anyone's rights. You give us the licence in the Terms of use to show it, and winners agree to their name, username and photo being used to announce results.<\/p><p><strong>10. Changes and cancellation.<\/strong> We may change or cancel the contest if something outside our control makes it unfair or impossible to run, and we'll say so on the site.<\/p><p><strong>11. Law.<\/strong> These rules follow the laws of [country/state]. [Add any registration, permit or regulator notice your law requires for prize competitions.]<\/p><p><strong>12. Contact.<\/strong> [email]<\/p>", "Cookie policy": "<p><strong>What we use.<\/strong> Cookies and similar tools that (a) keep the site working, such as your sign-in and cart, (b) remember your choices, and (c) [if you add analytics] help us understand how the site is used.<\/p><p><strong>Your choices.<\/strong> Essential cookies can't be switched off. For everything else, we ask for your consent [via the cookie banner], and you can change your mind at any time in [settings link] or your browser.<\/p><p><strong>Contact.<\/strong> [privacy email]<\/p>"};
+/* downloads, live streams */
+let DL=null;const hosted=!!(window.claude&&window.claude.use);if(hosted)window.claude.use("downloads").then(d=>{DL=d}).catch(()=>{});
+const toast=(t,k="ok")=>{$("#toast").innerHTML=`<div class="msg ${k}">${t}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>$("#toast").innerHTML="",4000)};
+const EXT={"image/png":".png","image/jpeg":".jpg","image/webp":".webp","video/mp4":".mp4","video/webm":".webm"};
+const fname=(t,f)=>(String(t).replace(/[^\w\- ]+/g,"").trim()||"puzzlecrown")+((f.name.match(/\.[A-Za-z0-9]{2,5}$/)||[EXT[f.type]||""])[0]).toLowerCase();
+async function saveFile(f,name){if(!f)return;
+if(DL){try{await DL.save({filename:name,data:f});toast("Saved! Check your downloads.")}catch(e){const c=e&&e.code;if(c==="declined")return;toast(c==="rejected_extension"?`That file type can't be saved from here. MP4, WebM, PNG, JPG and WebP work.`:c==="rate_limited"?"One moment, then try again.":"We couldn't save that file. Try again.","err")}return}
+if(hosted){toast("Downloads aren't available on this page. They work on your own site.","err");return}
+const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();a.remove();toast("Download started.")}
+const media=x=>!x.src?"Sample entry<br>Upload yours to see it here":x.kind==="image"?`<img src="${x.src}" alt="${esc(x.t)}" style="width:100%;height:100%;border-radius:12px;object-fit:cover">`:`<video src="${x.src}" controls playsinline preload="metadata" style="width:100%;height:100%;border-radius:12px;object-fit:cover"></video>`;
+const dl=(x,i)=>x.file?`<button class="btn alt" style="margin-top:.7rem" data-dl="${i}">⬇ Download ${x.kind==="image"?"photo":"video"}</button>`:"";
+$("#pfDl").onclick=()=>saveFile(me.avatarFile,fname("profile-picture-"+me.user,me.avatarFile));
+
+let ls=null,chat=[{n:"Zara",t:"Can't wait for Awards night! 🎉"}],rem={};
+const sched=[{t:"Awards night 2026 live",w:"Sat 12 Dec, 6 pm",d:"From the venue, with the winners on stage."},{t:"Showcase hangout",w:"Fri 9 Oct, 7 pm",d:"Meet the makers and watch top entries."},{t:"Puzzle speed race",w:"Sat 17 Oct, 3 pm",d:"Live solves. Fastest time wins bragging rights."}];
+function drawSched(){$("#sched").innerHTML=sched.map((x,i)=>`<div class="row" style="justify-content:space-between;flex-wrap:nowrap;padding:.5rem 0;border-bottom:1px solid var(--line)"><div><strong>${x.t}</strong><p class="sub" style="margin:0;font-size:.9rem">${x.w} · ${x.d}</p></div><button class="btn alt" data-r="${i}" aria-pressed="${!!rem[i]}">${rem[i]?"Reminder on ✓":"Remind me"}</button></div>`).join("")}
+$("#sched").onclick=e=>{const b=e.target.closest("[data-r]");if(b){rem[b.dataset.r]=!rem[b.dataset.r];drawSched()}};
+function drawChat(){const l=$("#chatLog");l.innerHTML=chat.length?chat.map(c=>`<p style="margin:.2rem 0"><strong>${esc(c.n)}</strong> ${esc(c.t)}</p>`).join(""):`<div class="empty"><div class="big">💬</div><p class="sub" style="margin:0">No messages yet. Say hi!</p></div>`;l.scrollTop=l.scrollHeight}
+function send(){const i=$("#chatIn"),t=i.value.trim();if(!t){i.setAttribute("aria-invalid","true");toast("Type a message first.","err");return}i.removeAttribute("aria-invalid");chat.push({n:me?me.first:"Guest",t});i.value="";drawChat()}
+$("#chatSend").onclick=send;$("#chatIn").onkeydown=e=>{if(e.key==="Enter")send()};
+function liveUI(on){$("#lv").hidden=!on;$("#off").hidden=on;$("#goLive").hidden=on;$("#endLive").hidden=!on;$("#badge").textContent=on?"LIVE":"Offline";$("#badge").classList.toggle("on",on)}
+function stopLive(){if(ls){ls.getTracks().forEach(t=>t.stop());ls=null}$("#lv").srcObject=null;liveUI(false)}
+$("#goLive").onclick=async()=>{const m=$("#lvMsg");
+if(!me){m.innerHTML='<div class="msg err">Sign in to go live. <a href="#account">Sign in</a></div>';return}
+if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){m.innerHTML=`<div class="msg err">This browser can't use a camera. Try another browser.</div>`;return}
+try{ls=await navigator.mediaDevices.getUserMedia({video:true,audio:true});$("#lv").srcObject=ls;liveUI(true);m.innerHTML=`<div class="msg info">You're live in preview. Only you can see this until the site is connected to a streaming service.</div>`}
+catch(e){m.innerHTML=`<div class="msg err">${e&&e.name==="NotFoundError"?"We couldn't find a camera on this device.":"We couldn't reach your camera. Allow camera and microphone access, then try again."}</div>`}};
+$("#endLive").onclick=()=>{stopLive();$("#lvMsg").innerHTML='<div class="msg ok">Your stream has ended. Thanks for sharing!</div>'};
+drawSched();drawChat();
+
+/* account */
+let users=[],me=null,mode="in";const okEmail=v=>/^\S+@\S+\.\S+$/.test(v);
+function authView(){$("#authForms").hidden=!!me;$("#authIn").hidden=!me;$("#formIn").hidden=mode!=="in";$("#formUp").hidden=mode!=="up";
+$$("#aTabs button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.m===mode));
+$("#authLink").href=me?"#profile":"#account";$("#authLink").innerHTML=me?(me.avatar?`<img class="hav" src="${me.avatar}" alt="">`:"")+"Hi, "+esc(me.first):"Sign in";if(me)$("#hi").textContent="Welcome, "+me.name+"! 👋"}
+function fill(){if(!me)return;["uN","gN","pName","cN"].forEach(id=>$("#"+id).value=me.name);$("#cE").value=me.email}
+$("#aTabs").onclick=e=>{const t=e.target.closest("[data-m]");if(t){mode=t.dataset.m;authView()}};
+const flag=(els,bad)=>els.forEach(x=>x.setAttribute("aria-invalid",bad.includes(x)));
+let step=1;const SN=["Your account","About you","Your profile"],g=id=>$("#"+id);
+function stepView(){$$(".stp").forEach(x=>x.hidden=+x.dataset.s!==step);$("#stepLbl").textContent=`Step ${step} of 3 · ${SN[step-1]}`;$("#prog").style.width=step/3*100+"%";$("#suBk").hidden=step===1;$("#suGo").textContent=step===3?"Create account":"Continue"}
+const age=d=>{const b=new Date(d),t=new Date();let a=t.getFullYear()-b.getFullYear();if(t<new Date(t.getFullYear(),b.getMonth(),b.getDate()))a--;return a};
+function checkStep(){let bad=null,err="";const f=(el,m)=>{bad=el;err=m},v=id=>g(id).value.trim();
+if(step===1){
+if(!v("suF"))f(g("suF"),"Add your first name.");
+else if(!v("suL"))f(g("suL"),"Add your last name.");
+else if(!/^[A-Za-z0-9_]{3,20}$/.test(v("suU")))f(g("suU"),"Pick a username of 3 to 20 letters, numbers or underscores.");
+else if(users.some(u=>u.user.toLowerCase()===v("suU").toLowerCase()))f(g("suU"),"That username is taken. Try another one.");
+else if(!okEmail(v("suE")))f(g("suE"),"Enter a valid email, like you@example.com.");
+else if(users.some(u=>u.email===v("suE").toLowerCase()))f(g("suE"),"That email already has an account. Try signing in instead.");
+else if(v("suM")&&!/^\+?[0-9 ()-]{7,16}$/.test(v("suM")))f(g("suM"),"That mobile number doesn't look right. Check it or leave it blank.");
+else if(g("suP").value.length<8)f(g("suP"),"Use a password with at least 8 characters.");
+else if(g("suP2").value!==g("suP").value)f(g("suP2"),"Those passwords don't match. Try typing them again.");
+}else if(step===2){
+if(!g("suD").value)f(g("suD"),"Add your date of birth.");
+else if(age(g("suD").value)<13)f(g("suD"),"You need to be at least 13 to join Puzzlecrown.");
+else if(age(g("suD").value)>120)f(g("suD"),"That date of birth doesn't look right.");
+else if(!v("suCo"))f(g("suCo"),"Add your country.");
+}else if(!g("suT").checked)f(null,"Tick the box to agree to the Terms and Privacy policy.");
+$$(`.stp[data-s="${step}"] input,.stp[data-s="${step}"] select`).forEach(x=>x.removeAttribute("aria-invalid"));
+if(bad){bad.setAttribute("aria-invalid","true");bad.focus()}return err}
+$("#suGo").onclick=()=>{const m=$("#suMsg"),err=checkStep();if(err){m.innerHTML=`<div class="msg err">${err}</div>`;return}
+m.innerHTML="";if(step<3){step++;stepView();return}
+me={id:"PC-"+Math.random().toString(36).slice(2,8).toUpperCase(),joined:new Date(),first:v0("suF"),last:v0("suL"),name:v0("suF")+" "+v0("suL"),user:v0("suU"),email:v0("suE").toLowerCase(),pw:g("suP").value,mobile:v0("suM"),dob:g("suD").value,gender:g("suG").value,country:v0("suCo"),city:v0("suCi"),job:v0("suJ"),bio:v0("suB"),interests:$$("#suI input:checked").map(x=>x.value),handle:v0("suS"),source:g("suH").value,news:g("suK").checked};
+users.push(me);$$("#formUp input:not([type=checkbox]),#formUp textarea").forEach(x=>x.value="");$$("#formUp input[type=checkbox]").forEach(x=>x.checked=false);g("suG").value=g("suH").value="";step=1;stepView();fill();authView()};
+const v0=id=>g(id).value.trim();
+$("#suBk").onclick=()=>{step--;stepView();$("#suMsg").innerHTML=""};
+stepView();
+$("#siGo").onclick=()=>{const e=$("#siE"),p=$("#siP"),m=$("#siMsg"),u=users.find(x=>x.email===e.value.trim().toLowerCase()&&x.pw===p.value);
+flag([e,p],u?[]:[e,p]);if(!u){m.innerHTML='<div class="msg err">That email and password don\'t match. Check them and try again, or sign up.</div>';return}
+me=u;e.value=p.value="";m.innerHTML="";fill();authView()};
+$("#forgot").onclick=()=>{$("#siMsg").innerHTML=okEmail($("#siE").value)?'<div class="msg ok">Thanks! If that email has an account, a reset link is on its way.</div>':'<div class="msg err">Enter your email above first, and we\'ll send a reset link.</div>'};
+$("#out").onclick=()=>{me=null;drawProfile();["uN","gN","pName","cN","cE"].forEach(id=>$("#"+id).value="");mode="in";authView()};
+document.addEventListener("click",e=>{const l=e.target.closest("[data-legal]");if(l){$("#lgT").textContent=l.dataset.legal;$("#lgB").innerHTML=LEGAL[l.dataset.legal]||"";$("#legal").showModal();$("#legal").scrollTop=0}});
+$("#lgX").onclick=()=>$("#legal").close();
+
+/* profile */
+const initials=n=>n.split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase();
+const PF={pfF:"first",pfL:"last",pfU:"user",pfE:"email",pfM:"mobile",pfD:"dob",pfG:"gender",pfCo:"country",pfCi:"city",pfJ:"job",pfB:"bio",pfS:"handle"};
+function drawProfile(){$("#pfOut").hidden=!!me;$("#pfIn").hidden=!me;if(!me)return;
+$("#pfAv").innerHTML=me.avatar?`<img src="${me.avatar}" alt="Your profile picture" style="width:100%;height:100%;object-fit:cover">`:initials(me.name);$("#pfRm").hidden=!me.avatar;$("#pfDl").hidden=!me.avatarFile;
+$("#pfName").textContent=me.name;$("#pfUser").textContent=me.user;$("#pfId").textContent=me.id;$("#pfJoin").textContent=me.joined.toLocaleDateString(undefined,{month:"short",year:"numeric"});
+for(const id in PF)g(id).value=me[PF[id]]||"";
+$$("#pfI input").forEach(x=>x.checked=(me.interests||[]).includes(x.value));g("pfK").checked=!!me.news;
+$("#bioOn").hidden=!!me.cred;$("#bioOff").hidden=!me.cred;
+const mine=reels.filter(x=>x.uid===me.id),sc=lb.filter(r=>r.uid===me.id);
+$("#pfAct").textContent=`${mine.length} video${mine.length===1?"":"s"} uploaded · ${sc.length?"best puzzle: "+sc[0].m+" moves in "+sc[0].t+"s":"no puzzle score yet"}`}
+$("#pfPicBtn").onclick=()=>$("#pfPic").click();
+$("#pfPic").onchange=e=>{const f=e.target.files[0],m=$("#pfPicMsg");e.target.value="";if(!f)return;
+if(!/^image\/(png|jpeg|webp)$/.test(f.type)){m.innerHTML='<div class="msg err">Choose a PNG, JPG or WebP picture.</div>';return}
+if(f.size>2*1024*1024){m.innerHTML='<div class="msg err">That picture is over 2 MB. Choose a smaller one.</div>';return}
+if(me.avatar)URL.revokeObjectURL(me.avatar);me.avatar=URL.createObjectURL(f);me.avatarFile=f;m.innerHTML='<div class="msg ok">Looking good! Your picture is updated.</div>';drawProfile();authView()};
+$("#pfRm").onclick=()=>{if(me.avatar)URL.revokeObjectURL(me.avatar);me.avatar=null;me.avatarFile=null;$("#pfPicMsg").innerHTML="";drawProfile();authView()};
+$("#pfSave").onclick=()=>{const m=$("#pfMsg"),v=id=>g(id).value.trim();let bad=null,err="";const f=(el,t)=>{bad=el;err=t},o=users.filter(u=>u!==me);
+if(!v("pfF"))f(g("pfF"),"Add your first name.");
+else if(!v("pfL"))f(g("pfL"),"Add your last name.");
+else if(!/^[A-Za-z0-9_]{3,20}$/.test(v("pfU")))f(g("pfU"),"Pick a username of 3 to 20 letters, numbers or underscores.");
+else if(o.some(u=>u.user.toLowerCase()===v("pfU").toLowerCase()))f(g("pfU"),"That username is taken. Try another one.");
+else if(!okEmail(v("pfE")))f(g("pfE"),"Enter a valid email, like you@example.com.");
+else if(o.some(u=>u.email===v("pfE").toLowerCase()))f(g("pfE"),"That email already has an account.");
+else if(v("pfM")&&!/^\+?[0-9 ()-]{7,16}$/.test(v("pfM")))f(g("pfM"),"That mobile number doesn't look right. Check it or leave it blank.");
+else if(!g("pfD").value||age(g("pfD").value)<13||age(g("pfD").value)>120)f(g("pfD"),"Add a valid date of birth. You must be at least 13.");
+else if(!v("pfCo"))f(g("pfCo"),"Add your country.");
+$$("#pfIn input,#pfIn select,#pfIn textarea").forEach(x=>x.removeAttribute("aria-invalid"));
+if(bad){bad.setAttribute("aria-invalid","true");bad.focus();m.innerHTML=`<div class="msg err">${err}</div>`;return}
+for(const id in PF)me[PF[id]]=PF[id]==="dob"||PF[id]==="gender"?g(id).value:v(id);me.email=me.email.toLowerCase();
+me.name=me.first+" "+me.last;me.interests=$$("#pfI input:checked").map(x=>x.value);me.news=g("pfK").checked;
+m.innerHTML='<div class="msg ok">Saved! Your profile is up to date.</div>';fill();authView();drawProfile()};
+
+/* face or fingerprint (passkeys). The device checks your face or fingerprint; the site never sees it. */
+const bioOK=!!(window.PublicKeyCredential&&navigator.credentials),rnd=()=>crypto.getRandomValues(new Uint8Array(32));
+const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b))),unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+function bioErr(e,el){const n=e&&e.name;el.innerHTML=`<div class="msg err">${!bioOK?"This browser or device doesn't support face or fingerprint sign-in. Use your email and password instead.":n==="NotAllowedError"?"That was cancelled, or this page isn't allowed to use face or fingerprint. It works on your own secure website.":n==="SecurityError"?"Face or fingerprint sign-in isn't available on this page. It works on your own secure website.":"We couldn't use face or fingerprint on this device. Use your email and password instead."}</div>`}
+if(!bioOK)$("#bioRow").hidden=true;
+$("#bioOn").onclick=async()=>{const m=$("#bioMsg");if(!bioOK)return bioErr(null,m);
+try{const c=await navigator.credentials.create({publicKey:{challenge:rnd(),rp:{name:"Puzzlecrown"},user:{id:new TextEncoder().encode(me.id),name:me.email,displayName:me.name},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},timeout:60000}});
+me.cred=b64(c.rawId);m.innerHTML='<div class="msg ok">Done! You can now sign in with your face or fingerprint on this device.</div>';$("#bioOn").hidden=true;$("#bioOff").hidden=false}catch(e){bioErr(e,m)}};
+$("#bioOff").onclick=()=>{me.cred=null;$("#bioMsg").innerHTML='<div class="msg ok">Face or fingerprint sign-in is off.</div>';$("#bioOn").hidden=false;$("#bioOff").hidden=true};
+$("#bioGo").onclick=async()=>{const m=$("#siMsg"),u=users.filter(x=>x.cred);
+if(!u.length){m.innerHTML='<div class="msg info">No face or fingerprint sign-in is set up yet. Sign in with your email, then turn it on in your profile.</div>';return}
+try{const a=await navigator.credentials.get({publicKey:{challenge:rnd(),userVerification:"required",allowCredentials:u.map(x=>({type:"public-key",id:unb64(x.cred)})),timeout:60000}});
+const w=u.find(x=>x.cred===b64(a.rawId));if(!w)throw 0;me=w;m.innerHTML="";fill();authView()}catch(e){bioErr(e,m)}};
+
+shuffle();drawLB();drawTabs();drawReels();drawPosts();authView();route();
+</script>
+</body>
+</html>
